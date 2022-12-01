@@ -2,15 +2,12 @@
 # to successfully recieve a file from the controller
 # to render that file
 # to send that file to the server to be streamed
-from cgitb import enable
-from email import message
 import json
-from pydoc import cli
-from utils import Addresses, MessageTypes, Ports
+from entityFunctions import Addresses, MessageTypes, Ports
 import socket
 import sys
-import utils
-from utils import *
+import entityFunctions
+from entityFunctions import *
 
 def rendererStart():
     print("runs")
@@ -37,7 +34,7 @@ def rendererStart():
         try:
             message = connection.recv(1024)
             print(str(message))
-            message = utils.json_loads_byteified(message)
+            message = entityFunctions.json_loads_byteified(message)
             messageType = message.get("type")
 
             if messageType is MessageTypes.REQUEST:
@@ -47,7 +44,7 @@ def rendererStart():
                 client.sendall(payload)
                 payload = client.recv(2048)
 
-                payload = utils.json_loads_byteified(payload)
+                payload = entityFunctions.json_loads_byteified(payload)
 
                 if payload["type"] is MessageTypes.ERROR:
                     print(payload["content"])
