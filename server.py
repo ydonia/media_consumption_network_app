@@ -6,9 +6,14 @@
 # support text files (and maybe audio files if we have time)
 import socket
 from socket import *
+from os import *
+from os.path import isfile, join
 import sys
+import json
+import entityFunctions
+from entityFunctions import Server, Controller, Renderer, EXIT_CODE, ERROR_CODE
+from entityFunctions import FILE_PATH
 
-serverPort = 1234
 
 # function to launch the server
 
@@ -23,30 +28,64 @@ def launch():
 
     # assign IP address and port number to this socket instance
     try:
-        serverSocket.bind(('', serverPort))
-        print("IP address assigned!")
+        serverSocket.bind(('', Server.Port))
+        print("Server port assigned!")
     except error as errorMessage:
         print("Failed to assign IP address due to " + str(errorMessage))
         sys.exit()
 
-    # TODO: should we have a value in the parameter to determine max connections?
-    serverSocket.listen()
+    # Get the server to listen, 2 connections max, the controller and renderer
+    serverSocket.listen(2)
     print("waiting for requests. . .")
 
     while True:
-        connectionSocket, addr = serverSocket.accept()
+        connectionSocket, address = serverSocket.accept()
+        if address == Controller.Address:
+            print("recieving message from Controller at: " + str(address))
+        elif address == Renderer.Address:
+            print("recieving message from Renderer at: " + str(address))
+        else:
+            print("recieving message from address: " + str(address))
 
+        # recieve the message from the client and give a reponse depending on what the client is asking
         try:
             message = connectionSocket.recv(1024)
-            print("Recieved message: " + message)
+            print("Recieved message of type: " + type(message))
+
+            # TODO: decode the message and get the type. the code below is TEMPORARY
+            # message = message.decode()
+            option = message["function"]
+            option = message.function
+            # TODO: not sure which one if these
 
             # CODE FOR FUNCTIONS OF THE SERVER
 
-            # if requested for files to send to controller
+            if option == Server.GET_FILES:
+                # gather the names of all the files in the server and send to controller
+                files = [file for file in listdir(
+                    FILE_PATH) if isfile(join(FILE_PATH, file))]
+                response = json.dumps({"data": files})
+                connectionSocket.sendall(response.encode())
+                # TODO: not sure if above encoding is correct
 
             # if requested to send a file to renderer
+            elif option == Renderer.SEE_FILE_CONTENTS:
+                path = join(FILE_PATH, message["data"])
+                file = open(path, "rb")
+                responseMessage = {}
+                responseMessage["function"] == Renderer.SEE_FILE_CONTENTS
+                responseMessage["file_name"] = message["data"]
+                responseMessage["data"] = file.read()
+
+                response = json.dumps(responseMessage)
+                connectionSocket.sendall(response)
 
             # if requested to end
+            elif option == EXIT_CODE:
+                response = json.dumps({"data": "closing server program"})
+                connectionSocket.sendall(response.encode())
+                # TODO: encoding
+                break
 
             connectionSocket.close()
             print("connection closed")
@@ -54,6 +93,15 @@ def launch():
         except IOError as errorMsg:
             print("Error " + str(errorMsg))
             # TODO: SEND THE ERROR MESSAGE TO THE CLIENT (CONTROLLER)
+            response = {}
+            response["function"] = ERROR_CODE
+            response["data"] = "File " + message["data"] + " not found"
+            connectionSocket.sendall(json.dumps(response))
+            connectionSocket.close()
+
+    print("Shutting down server.")
+    serverSocket.shutdown(SHUT_RDWR)
+    serverSocket.close()
 
 
 if __name__ == "__main__":
