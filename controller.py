@@ -7,7 +7,8 @@ import socket
 from socket import AF_INET, SOCK_STREAM
 import sys
 import json
-from entityFunctions import Server, Controller, Renderer, EXIT_CODE
+from entityFunctions import Server, Renderer, EXIT_CODE
+from entityFunctions import *
 
 
 # function to send message based on the function and return the reponse to the message from the server or the renderer
@@ -51,12 +52,12 @@ def getFiles():
     # send message to server requesting to fetch files using JSON
     # (using dumps, not dump because we don't want to create a file every time we use the method: https://www.analyticssteps.com/blogs/working-python-json-object)
     message = json.dumps({"function": Server.GET_FILES})
-    response = getResponse(Server.GET_FILES, message).decode()
-    response = json.loads(response)  # convert to json object?
-    # TODO: encoding and decoding
+
+    # convert response to a json object. used function from stackOverflow, link found in entityFunctions.py
+    response = json_loads_byteified(getResponse(Server.GET_FILES, message))
 
     # decode and parse the fetched data (could be multiple files so must make sure to account for that!)
-    fileList = response["data"]
+    fileList = response.get("data")
 
     # store and print the files in a list
     print("Files contained in Server:\n" + str(fileList))
@@ -75,6 +76,7 @@ def seeFileContents():
     message = json.dumps(message)
 
     response = getResponse(Renderer.SEE_FILE_CONTENTS, message)
+    # no need to decode because we are just outputting the entire string as a list
     print("response from Renderer: " + str(response))
 
 
@@ -104,8 +106,8 @@ def send_shutdown_signal():
     message["function"] = EXIT_CODE
     message = json.dumps(message)
 
-    response = getResponse(EXIT_CODE, message).decode()
-    exitMessage = response["data"]
+    response = json_loads_byteified(getResponse(EXIT_CODE, message))
+    exitMessage = response.get("data")
     print("Shutdown response: " + str(exitMessage))
     print("Exiting app.")
     sys.exit()

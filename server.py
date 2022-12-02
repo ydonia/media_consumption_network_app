@@ -10,10 +10,9 @@ from os import *
 from os.path import isfile, join
 import sys
 import json
-import entityFunctions
 from entityFunctions import Server, Controller, Renderer, EXIT_CODE, ERROR_CODE
 from entityFunctions import FILE_PATH
-
+from entityFunctions import json_loads_byteified
 
 # function to launch the server
 
@@ -47,16 +46,14 @@ def launch():
         else:
             print("recieving message from address: " + str(address))
 
-        # recieve the message from the client and give a reponse depending on what the client is asking
+        # recieve the message (and decode + convert to json)
+        # from the client and give a reponse depending on what the client is asking
         try:
-            message = connectionSocket.recv(1024)
-            print("Recieved message of type: " + type(message))
+            message = json_loads_byteified(connectionSocket.recv(1024))
+            # print("Recieved message of type: " + type(message))
 
-            # TODO: decode the message and get the type. the code below is TEMPORARY
-            # message = message.decode()
-            option = message["function"]
-            option = message.function
-            # TODO: not sure which one if these
+            # get value from key in dictionary
+            option = message.get("function")
 
             # CODE FOR FUNCTIONS OF THE SERVER
 
@@ -65,16 +62,16 @@ def launch():
                 files = [file for file in listdir(
                     FILE_PATH) if isfile(join(FILE_PATH, file))]
                 response = json.dumps({"data": files})
-                connectionSocket.sendall(response.encode())
+                connectionSocket.sendall(response)
                 # TODO: not sure if above encoding is correct
 
             # if requested to send a file to renderer
             elif option == Renderer.SEE_FILE_CONTENTS:
-                path = join(FILE_PATH, message["data"])
+                path = join(FILE_PATH, message.get("data"))
                 file = open(path, "rb")
                 responseMessage = {}
                 responseMessage["function"] == Renderer.SEE_FILE_CONTENTS
-                responseMessage["file_name"] = message["data"]
+                responseMessage["file_name"] = message.get("data")
                 responseMessage["data"] = file.read()
 
                 response = json.dumps(responseMessage)
@@ -83,7 +80,7 @@ def launch():
             # if requested to end
             elif option == EXIT_CODE:
                 response = json.dumps({"data": "closing server program"})
-                connectionSocket.sendall(response.encode())
+                connectionSocket.sendall(response)
                 # TODO: encoding
                 break
 
@@ -95,7 +92,7 @@ def launch():
             # TODO: SEND THE ERROR MESSAGE TO THE CLIENT (CONTROLLER)
             response = {}
             response["function"] = ERROR_CODE
-            response["data"] = "File " + message["data"] + " not found"
+            response["data"] = "File " + message.get("data") + " not found"
             connectionSocket.sendall(json.dumps(response))
             connectionSocket.close()
 

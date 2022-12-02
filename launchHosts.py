@@ -1,8 +1,7 @@
 '''
 File to launch mininet, and create three hosts on the same network'''
 
-import mininet
-from mininet.topo import Topo, SingleSwitchTopo
+from mininet.topo import SingleSwitchTopo
 from mininet.net import Mininet
 from mininet.log import setLogLevel
 from mininet.cli import CLI  # import command line input
