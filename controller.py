@@ -7,8 +7,8 @@ import socket
 from socket import AF_INET, SOCK_STREAM
 import sys
 import json
-from entityFunctions import Server, Renderer, EXIT_CODE
 from entityFunctions import *
+import time
 
 
 # function to send message based on the function and return the reponse to the message from the server or the renderer
@@ -29,12 +29,13 @@ def getResponse(option, message):
         controllerSocket.sendall(message)
 
     # if option 3
-    elif option == Server.EXIT:
+    elif option == EXIT_CODE:
 
         # send exit code to server to terminate the program
         controllerSocket.connect((Server.Address, Server.Port))
         controllerSocket.sendall(message)
         controllerSocket.close()
+        time.sleep(2)
 
         # do the same with the renderer
         controllerSocket = socket.socket(AF_INET, SOCK_STREAM)
@@ -44,6 +45,7 @@ def getResponse(option, message):
     response = controllerSocket.recv(1024)
     print("response from server: " + str(response))
     controllerSocket.close()
+    time.sleep(2)
     return response
 
 
@@ -66,8 +68,10 @@ def getFiles():
 # function to give the information to the renderer that it needs to get a file from the server
 def seeFileContents():
     # get the file name
-    fileName = input("Enter the name of the file you would like to render: ")
-
+    # in python 3, change raw_input to input()
+    fileName = raw_input(
+        "Enter the name of the file you would like to render: ")
+    print("The filename is ", fileName)
     # send the name of that file to the renderer so that it knows which file to request from the server
     message = {}
     message["function"] = Renderer.SEE_FILE_CONTENTS

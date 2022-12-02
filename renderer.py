@@ -8,14 +8,16 @@ import sys
 import entityFunctions
 from entityFunctions import *
 
+
 def rendererStart():
     rSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     rSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     print("Created the Render Socket")
 
     try:
-        rSocket.bind(('', Renderer.Port))
+        rSocket.bind((Renderer.Address, Renderer.Port))
         print("Bind complete")
+        print("Renderer Address: ", rSocket.getsockname())
 
     except socket.error:
         print("Binding Error, exiting program...")
@@ -40,7 +42,7 @@ def rendererStart():
                 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 client.connect((Server.Address, Server.Port))
                 client.sendall(payload)
-                
+
                 payload = client.recv(2048)
                 payload = entityFunctions.json_loads_byteified(payload)
 
@@ -49,14 +51,14 @@ def rendererStart():
                 else:
                     print("File: " + payload["file_name"])
                     print(payload["data"])
-            
+
             elif messageType is EXIT_CODE:
                 enabled = False
                 data = json.dumps({"data": "[RENDERER] shutting down"})
                 connection.sendall(data)
 
             print("Connection closing...")
-            client.close()    
+            client.close()
             connection.close()
 
         except IOError as e:

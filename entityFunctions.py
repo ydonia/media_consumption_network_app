@@ -7,13 +7,13 @@ class Controller:
 
 
 class Server:
-    Port = 1234
+    Port = 1111
     Address = "10.0.0.2"
     GET_FILES = 1
 
 
 class Renderer:
-    Port = 12345
+    Port = 2222
     Address = "10.0.0.3"
     SEE_FILE_CONTENTS = 2
 

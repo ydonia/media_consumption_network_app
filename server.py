@@ -6,7 +6,7 @@
 # support text files (and maybe audio files if we have time)
 import socket
 from socket import *
-from os import *
+import os
 from os.path import isfile, join
 import sys
 import json
@@ -27,10 +27,11 @@ def launch():
 
     # assign IP address and port number to this socket instance
     try:
-        serverSocket.bind(('', Server.Port))
-        print("Server port assigned!")
+        serverSocket.bind((Server.Address, Server.Port))
+        print("Server ip and port assigned!")
+        print("Server Address: ", serverSocket.getsockname())
     except error as errorMessage:
-        print("Failed to assign IP address due to " + str(errorMessage))
+        print("Failed to assign ip/port due to " + str(errorMessage))
         sys.exit()
 
     # Get the server to listen, 2 connections max, the controller and renderer
@@ -39,6 +40,8 @@ def launch():
 
     while True:
         connectionSocket, address = serverSocket.accept()
+        print("connectionSocket is ", connectionSocket)
+        print(" and its address is: ", address)
         if address == Controller.Address:
             print("recieving message from Controller at: " + str(address))
         elif address == Renderer.Address:
@@ -58,19 +61,19 @@ def launch():
             # CODE FOR FUNCTIONS OF THE SERVER
 
             if option == Server.GET_FILES:
+                print("Server carrying out option ", Server.GET_FILES)
                 # gather the names of all the files in the server and send to controller
-                files = [file for file in listdir(
+                files = [file for file in os.listdir(
                     FILE_PATH) if isfile(join(FILE_PATH, file))]
                 response = json.dumps({"data": files})
                 connectionSocket.sendall(response)
-                # TODO: not sure if above encoding is correct
 
             # if requested to send a file to renderer
             elif option == Renderer.SEE_FILE_CONTENTS:
                 path = join(FILE_PATH, message.get("data"))
                 file = open(path, "rb")
                 responseMessage = {}
-                responseMessage["function"] == Renderer.SEE_FILE_CONTENTS
+                responseMessage["function"] = Renderer.SEE_FILE_CONTENTS
                 responseMessage["file_name"] = message.get("data")
                 responseMessage["data"] = file.read()
 
