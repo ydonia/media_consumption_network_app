@@ -1,6 +1,5 @@
 import os
 import json
-import unicodedata
 
 
 class Controller:
@@ -38,7 +37,8 @@ def json_loads_byteified(json_text):
 
 def _byteify(data, ignore_dicts=False):
     # If this is a unicode string, return its string representation
-    if isinstance(data, unicodedata):  # unicodedata is from import on line 7, if it doesnt work, change it back to unicode, delete the import, wait for the error, aand try different import statements
+    # if python 3, instead of below line use isinstance(data, str):
+    if isinstance(data, unicode):
         return data.encode('utf-8')
 
     # If this is a list of values, return list of byteified values
